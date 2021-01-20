@@ -1,53 +1,81 @@
 <template>
-  <div>
-    <v-content>
-      <button @click="getData">aaaaa</button>
-      <img :src="results" />
-      ssss
-    </v-content>
+  <div id="clock">
+      <StopWatchVue :postTestMin="postTestMin"
+                  :postTestSec="postTestSec"
+                  :recordTest="recordTest"
+    />
+        <div>
+      <v-btn @click="countTime">Start</v-btn>
+      <!--시작/재시작/기록 버튼-->
+    </div>
+    <LightVue :on1="on1" />
+    <LightVue :on1="on2" />
+    <LightVue :on1="on3" @start="onStart" />
   </div>
 </template>
-
 <script>
-import axios from "axios";
-
+import LightVue from "./Light.vue";
+import StopWatchVue from "./Stopwatch.vue";
 export default {
+  components: {
+    LightVue,StopWatchVue
+  },
   data() {
     return {
-      results: null,
+      on1: false,
+      on2: false,
+      on3: false,
+      stTime: 0,
+      timerStart: "",
+      postTestMin: "00",
+      postTestSec: "00",
+      recordTest: "00",
+      count: 0,
     };
   },
-  mounted() {
-    this.getData();
-  },
   methods: {
-    getData() {
-      let url =
-        "https://images.unsplash.com/photo-1610048899906-d8f64bc45464?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format";
-      let p = this.getImageBase64(url); // 1
-      console.log("1");
-      p.then((data) => {
-        // 2
-        console.log("2");
-        this.results = "data:image/png;base64," + data;
-      });
-
-      console.log("3");
+    onStart(data) {
+      console.log("onStart", data);
     },
+    countTime() {
+      if (!this.stTime) {
+        this.stTime = Date.now();
+        this.timerStart = setInterval(() => this.timer(this.stTime), 1000);
+      }
+    },
+    timer(stTime) {
+      var nowTime = new Date().getTime(); //1ms당 한 번씩 현재시간 timestamp를 불러와 nowTime에 저장
+      var time = nowTime - stTime;
+      var timeSec = Math.floor(time / 1000);
+      var min = Math.floor(timeSec / 60);
+      var sec = Math.floor(timeSec % 60);
 
-    getImageBase64(url) {
-      return new Promise((resolve, reject) => {
-        axios.get(url, { responseType: "arraybuffer" }).then(
-          (response) => {
-            console.log("4");
-            let temp = Buffer.from(response.data, "binary").toString("base64");
-            resolve(temp);
-          },
-          (err) => {
-            reject(err);
-          }
-        );
-      });
+      if (timeSec % 3 == 0) {
+        this.on1 = !this.on1;
+      }
+      if (timeSec % 7 == 0) {
+        this.on2 = !this.on2;
+      }
+      if (timeSec % 10 == 0) {
+        this.on3 = !this.on3;
+      }
+
+      if (this.on1 && this.on2 && this.on3) {
+        this.count++;
+        this.recordTest = this.count;
+      }
+      this.printTime(min, sec);
+
+      if (min == 0 && sec == 10) {
+        clearInterval(this.timerStart);
+      }
+    },
+    addZero(time) {
+      return (time < 10 ? "0" : "") + time;
+    },
+    printTime(min, sec) {
+      this.postTestMin = this.addZero(min);
+      this.postTestSec = this.addZero(sec);
     },
   },
 };
